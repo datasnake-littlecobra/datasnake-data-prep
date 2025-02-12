@@ -9,8 +9,10 @@ import geopandas as gpd
 from deltalake.writer import write_deltalake
 from DataFrameCache import DataFrameCache
 
+# comment for dev
 # from push_to_deltalake_prod import save_to_deltalake_local
-from push_to_deltalake_prod import upload_raw_delta_to_s3_prod
+# comment for dev
+# from push_to_deltalake_prod import upload_raw_delta_to_s3_prod
 
 # ✅ Set up logging to BOTH Console & File
 logger = logging.getLogger("prefect")
@@ -37,9 +39,9 @@ logger.addHandler(file_handler)
 
 # Paths to GADM GeoPackage files
 gadm_paths_datasnake = {
-    "ADM0": "/home/resources/geoBoundariesCGAZ_ADM0.gpkg",
-    "ADM1": "/home/resources/geoBoundariesCGAZ_ADM1.gpkg",
-    "ADM2": "/home/resources/geoBoundariesCGAZ_ADM2.gpkg",
+    "ADM0": "C:\\datasnake\\prab\\dev\\usgs-earthquake-data-pipeline\\resources\\geoBoundariesCGAZ_ADM0.gpkg",
+    "ADM1": "C:\\datasnake\\prab\\dev\\usgs-earthquake-data-pipeline\\resources\\geoBoundariesCGAZ_ADM1.gpkg",
+    "ADM2": "C:\\datasnake\\prab\\dev\\usgs-earthquake-data-pipeline\\resources\\geoBoundariesCGAZ_ADM2.gpkg",
 }
 
 # Delta Lake storage paths
@@ -186,10 +188,10 @@ def process_gadm_level(level: str):
         logger.info(
             f"Uploading the raw delta lake to Object Storage...{deltalake_gadm_s3_uri[level]} , with partitions as {deltalake_partitions[level]}"
         )
-        
-        upload_raw_delta_to_s3_prod(
-            df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
-        )
+        # comment for dev
+        # upload_raw_delta_to_s3_prod(
+        #     df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
+        # )
     else:
         print(f"Skipping {level} due to missing data.")
         logger.warning(f"Skipping {level} due to missing data.")
