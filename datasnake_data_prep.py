@@ -1,3 +1,4 @@
+import os
 import logging
 from prefect import flow, task
 from prefect.tasks import task_input_hash
@@ -80,14 +81,53 @@ country_code_mapping = {
     "ZAF": "ZA",  # South Africa
 }
 
+# Check if a file has changed (optional, if updates occur)
+import hashlib
 
-@task(retries=3, cache_policy=INPUTS, cache_expiration=timedelta(minutes=60))
+
+def file_hash(file_path):
+    """Returns the MD5 hash of the file for cache invalidation."""
+    if not os.path.exists(file_path):
+        return None
+    with open(file_path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+
+# @task(retries=3, cache_policy=INPUTS, cache_expiration=timedelta(minutes=60))
+@task(
+    retries=3,
+    cache_key_fn=lambda file_path: file_hash(file_path),  # Cache based on file content
+    cache_expiration=timedelta(minutes=15),  # Cache for 1 day (adjust as needed)
+    cache_result_in_memory=True,  # Keeps result in Prefect memory
+)
 def load_gadm_data(file_path):
-    """Load GADM data from a GeoPackage file into a GeoDataFrame."""
+    """Load GADM data from a GeoPackage file into a GeoDataFrame with caching."""
+
+    # 🟢 Debug: Check if the file exists before reading
+    if not os.path.exists(file_path):
+        print(f"File not found: {file_path}. Cannot proceed!")
+        logger.info(f"File not found: {file_path}. Cannot proceed!")
+        return None
+
+    # 🟢 Debug: Check cache state
+    cached_result = load_gadm_data.fn(file_path)  # Check Prefect’s in-memory cache
+    if cached_result is not None:
+        print("Cache HIT - Using cached result!")
+        logger.info("Cache HIT - Using cached result!")
+        return cached_result
+    else:
+        print("Cache MISS - Reading file from disk...")
+        logger.warning("Cache MISS - Reading file from disk...")
+
+    # 🟢 Read the file (Only happens if cache is empty/missing)
     try:
-        return gpd.read_file(file_path)
+        df = gpd.read_file(file_path)
+        print("Data loaded successfully!")
+        logger.info("Data loaded successfully!")
+        return df
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
+        logger.warning(f"Error reading {file_path}: {e}")
         return None
 
 
