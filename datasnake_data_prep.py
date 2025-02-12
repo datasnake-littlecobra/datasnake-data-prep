@@ -17,7 +17,9 @@ logger = logging.getLogger("prefect")
 logger.setLevel(logging.INFO)  # Log everything including debug
 
 # ✅ Add File Handler
-file_handler = logging.FileHandler("pipeline.log", mode="a", encoding="utf-8")  # Append mode
+file_handler = logging.FileHandler(
+    "pipeline.log", mode="a", encoding="utf-8"
+)  # Append mode
 file_handler.setLevel(logging.INFO)  # Capture debug and above
 
 # ✅ Add Console Handler (for real-time logs)
@@ -133,8 +135,10 @@ def convert_gdf_to_polars(gdf, level):
 @flow(log_prints=True)
 def process_gadm_level(level: str):
     """Process a single GADM level and store it, measuring time and size."""
-    print(f"Processing {level}...")
-    logger.info(f"Processing {level}...")
+    print(f"Processing {level} with file positioned at {gadm_paths_datasnake[level]}")
+    logger.info(
+        f"Processing {level} with file positioned at {gadm_paths_datasnake[level]}"
+    )
 
     start_time = time.time()  # Start timing
     gdf = load_gadm_data(gadm_paths_datasnake[level])
@@ -160,7 +164,9 @@ def process_gadm_level(level: str):
         logger.info(
             f"Uploading the raw delta lake to Object Storage...{deltalake_gadm_s3_uri[level]} , with partitions as {deltalake_partitions[level]}"
         )
-        upload_raw_delta_to_s3_prod(df, deltalake_gadm_s3_uri[level], deltalake_partitions[level])
+        upload_raw_delta_to_s3_prod(
+            df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
+        )
     else:
         print(f"Skipping {level} due to missing data.")
         logger.warning(f"Skipping {level} due to missing data.")
