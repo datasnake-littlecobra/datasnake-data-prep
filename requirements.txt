@@ -1,0 +1,9 @@
+boto3==1.36.17
+cassandra_driver==3.29.2
+deltalake==0.24.0
+duckdb==1.2.0
+geopandas==1.0.1
+hvac==2.3.0
+polars==1.22.0
+prefect==3.2.1
+Shapely==2.0.7
