@@ -84,16 +84,16 @@ country_code_mapping = {
 CACHE = None  # Simple in-memory cache
 
 # @task(retries=3, cache_policy=INPUTS, cache_expiration=timedelta(minutes=60))
-# @task(retries=3, cache_expiration=timedelta(minutes=1))
+@task(retries=3, cache_expiration=timedelta(minutes=15))
 def load_gadm_data(file_path):
     """Load GADM data from a GeoPackage file into a GeoDataFrame with caching."""
 
-    # global CACHE
+    global CACHE
 
     # Check if cache exists
-    # if CACHE is not None:
-    #     print("Using cached data")
-    #     return CACHE
+    if CACHE is not None:
+        print("Using cached data")
+        return CACHE
 
     # Check if file exists
     if not os.path.exists(file_path):
@@ -104,8 +104,9 @@ def load_gadm_data(file_path):
     # Read the file (only if cache is empty)
     try:
         print("Cache empty - Reading file from disk...")
+        CACHE = gpd.read_file(file_path)
         print("Data loaded successfully!")
-        return gpd.read_file(file_path)
+        return CACHE
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
         return None
