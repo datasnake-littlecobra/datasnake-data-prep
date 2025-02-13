@@ -16,7 +16,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         logging.info(keyspace)
         print(cluster_ips.split(","))
         print(keyspace)
-        session = connect_cassandra(cluster_ips.split(","), keyspace)
+        session = connect_cassandra(keyspace)
         # optimized_batch_insert_cassandra(
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
         # )
@@ -34,22 +34,23 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
             raise
 
 
-def connect_cassandra(cluster_ips, keyspace):
-    logging.info(f"Connecting to Cassandra cluster: {cluster_ips}")
+
+def connect_cassandra(keyspace):
+    logging.info(f"Connecting to Cassandra cluster: ")
     try:
         """Connect to Cassandra."""
         USERNAME = "cassandra"
         PASSWORD = "cassandra"
+        CASSANDRA_HOSTS = ["127.0.0.1"]
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
         cluster = Cluster(
-            cluster_ips,
+            CASSANDRA_HOSTS,
             auth_provider=auth_provider,
-            # load_balancing_policy=DCAwareRoundRobinPolicy(),
-            # protocol_version=5,  # Adjust based on your cluster version
-        )  # Replace with container's IP if needed
+            load_balancing_policy=DCAwareRoundRobinPolicy(),
+            protocol_version=5,  # Adjust if needed
+        )
         session = cluster.connect()
         session.set_keyspace(keyspace)
-        logging.info("Connected to cassandra...")
         return session
     except Exception as e:
         logging.error(f"Failed to connect to Cassandra: {e}")
