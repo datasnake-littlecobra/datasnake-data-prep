@@ -226,10 +226,15 @@ def process_gadm_level(level: str):
         upload_raw_delta_to_s3_prod(
             df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
         )
+
+        # Cassandra
+        start_time = time.time()
         cluster_ips = "127.0.0.1"
         keyspace = "datasnake_data_prep_keyspace"
-
         save_to_cassandra_main(df, cluster_ips, keyspace, level)
+        end_time = time.time()
+        time_taken = end_time - start_time
+        logger.info(f"Total time take to store gadm_{level} : {time_taken}")
     else:
         print(f"Skipping {level} due to missing data.")
         logger.warning(f"Skipping {level} due to missing data.")

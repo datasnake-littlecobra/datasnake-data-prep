@@ -175,6 +175,7 @@ def convert_gdf_to_polars(gdf, level):
         gdf = gdf[dataframe_mapping["ADM2"]]
 
     df = pl.DataFrame(gdf)
+    df.filter(df["country_code"].is_not_null())
     # df = df.with_columns(pl.lit(level).alias("gadm_level"))
     # print(df.head())
     return df
