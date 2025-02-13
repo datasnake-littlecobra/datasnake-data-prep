@@ -1,3 +1,5 @@
+from cassandra.query import BatchStatement
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.policies import DCAwareRoundRobinPolicy
@@ -13,6 +15,9 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         session = connect_cassandra(cluster_ips.split(","), keyspace)
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
         batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
+        optimized_insert_cassandra(
+            session, keyspace, gadm_level, df, concurrency=5, batch_size=100
+        )
     except Exception as e:
         logging.error(f"Error writing to Cassandra: {e}")
     finally:
@@ -39,6 +44,90 @@ def connect_cassandra(cluster_ips, keyspace):
         return session
     except Exception as e:
         logging.error(f"Failed to connect to Cassandra: {e}")
+        raise
+
+
+def optimized_insert_cassandra(
+    session, keyspace, gadm_level, dataframe, concurrency=5, batch_size=100
+):
+    try:
+        table_mapping = {
+            "ADM0": {
+                "table_name": "gadm0_data",
+                "columns": [
+                    "country_code",
+                    "country_full_name",
+                    "gadm_level",
+                    "wkt_geometry_country",
+                ],
+            },
+            "ADM1": {
+                "table_name": "gadm1_data",
+                "columns": [
+                    "country_code",
+                    "state",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_state",
+                ],
+            },
+            "ADM2": {
+                "table_name": "gadm2_data",
+                "columns": [
+                    "country_code",
+                    "city",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_city",
+                ],
+            },
+        }
+        # Process in chunks of 10,000 records
+        # chunk_size = 10000
+        # for i in range(0, len(dataframe), chunk_size):
+        #     chunk = dataframe[i:i + chunk_size]
+        #     async_insert_cassandra(session, table_name, chunk, concurrency=20)
+        # logging.info(f"Starting to write into cassandra: {table_name}")
+        table_info = table_mapping[gadm_level]
+        table_name = table_info["table_name"]
+        columns = table_info["columns"]
+
+        # Step 4: Generate the INSERT CQL statement dynamically
+        column_names = ", ".join(columns)
+        placeholders = ", ".join(
+            ["?"] * len(columns)
+        )  # Cassandra uses %s as placeholders
+
+        insert_query = f"INSERT INTO {keyspace}.{table_name} ({column_names}) VALUES ({placeholders})"
+        # print("printing cassandra variables:")
+        # print(column_names)
+        # print(placeholders)
+        # print(insert_query)
+
+        prepared = session.prepare(insert_query)
+
+        args = [
+            tuple(row[col] if col in row else None for col in columns)
+            for row in dataframe.iter_rows(named=True)
+        ]
+
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            futures = []
+
+            for i in range(0, len(dataframe), batch_size):
+                batch = BatchStatement()
+                for _, row in dataframe.iloc[i : i + batch_size].iterrows():
+                    batch.add(prepared, (row["col1"], row["col2"], row["col3"]))
+
+                futures.append(executor.submit(session.execute, batch))
+
+            for future in as_completed(futures):
+                try:
+                    future.result()  # Raise any exception
+                except Exception as e:
+                    logging.error(f"Insert failed: {e}")
+    except Exception as e:
+        logging.error(f"Errored out writing to cassandra: {e}")
         raise
 
 
