@@ -97,18 +97,8 @@ def batch_insert_cassandra_async(
         print(column_names)
         print(placeholders)
         print(insert_query)
-        return
-        # prepared = session.prepare(insert_query)
-        # args = [
-        #     (
-        #         row["country"],
-        #         row["state"] if "state" in row else None,
-        #         row["city"] if "city" in row else None,
-        #         row["gadm_level"],
-        #         row["wkt_geometry_country"] if "wkt_geometry_country" in row else None,
-        #     )
-        #     for row in dataframe.iter_rows(named=True)
-        # ]
+        
+        prepared = session.prepare(insert_query)
         
         args = [
             tuple(row[col] if col in row else None for col in columns)
