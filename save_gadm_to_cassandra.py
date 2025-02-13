@@ -6,18 +6,15 @@ from cassandra.concurrent import execute_concurrent_with_args
 import logging
 
 
-def save_to_cassandra_main(
-    df,
-    cluster_ips,
-    keyspace,
-    cassandra_table_name,
-):
+def save_to_cassandra_main(df, cluster_ips, keyspace, cassandra_table_name, gadm_level):
     logging.info("Inside Cassandra Connect call:")
     logging.info(cluster_ips.split(","))
     logging.info(keyspace)
     session = connect_cassandra(cluster_ips.split(","), keyspace)
     # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-    batch_insert_cassandra_async(session, cassandra_table_name, df, concurrency=10)
+    batch_insert_cassandra_async(
+        session, cassandra_table_name, gadm_level, df, concurrency=10
+    )
 
 
 def connect_cassandra(cluster_ips, keyspace):
@@ -39,23 +36,43 @@ def connect_cassandra(cluster_ips, keyspace):
         raise
 
 
-def batch_insert_cassandra_async(session, table_name, dataframe, concurrency=20):
+def batch_insert_cassandra_async(
+    session, table_name, gadm_level, dataframe, concurrency=20
+):
     try:
         """Insert data into Cassandra asynchronously."""
         # Step 2: Define table structures dynamically
         table_mapping = {
             "ADM0": {
                 "table_name": "gadm0_data",
-                "columns": ["country_code", "country_full_name", "gadm_level", "wkt_geometry_country"]
+                "columns": [
+                    "country_code",
+                    "country_full_name",
+                    "gadm_level",
+                    "wkt_geometry_country",
+                ],
             },
             "ADM1": {
                 "table_name": "gadm1_data",
-                "columns": ["country_code", "state", "shapeID", "gadm_level", "wkt_geometry_state"]
+                "columns": [
+                    "country_code",
+                    "state",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_state",
+                ],
             },
             "ADM2": {
                 "table_name": "gadm2_data",
-                "columns": ["country_code", "state", "city", "shapeID", "gadm_level", "wkt_geometry_city"]
-            }
+                "columns": [
+                    "country_code",
+                    "state",
+                    "city",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_city",
+                ],
+            },
         }
         # Process in chunks of 10,000 records
         # chunk_size = 10000
@@ -66,12 +83,16 @@ def batch_insert_cassandra_async(session, table_name, dataframe, concurrency=20)
         table_info = table_mapping[gadm_level]
         table_name = table_info["table_name"]
         columns = table_info["columns"]
-        
+
         # Step 4: Generate the INSERT CQL statement dynamically
         column_names = ", ".join(columns)
-        placeholders = ", ".join(["%s"] * len(columns))  # Cassandra uses %s as placeholders
-        
-        insert_query = f"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})"
+        placeholders = ", ".join(
+            ["%s"] * len(columns)
+        )  # Cassandra uses %s as placeholders
+
+        insert_query = (
+            f"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})"
+        )
         prepared = session.prepare(insert_query)
         # args = [
         #     (

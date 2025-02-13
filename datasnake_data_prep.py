@@ -229,6 +229,7 @@ def process_gadm_level(level: str):
             cluster_ips,
             keyspace,
             cassandra_table_names[level],
+            level
         )
     else:
         print(f"Skipping {level} due to missing data.")
