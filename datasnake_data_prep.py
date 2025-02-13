@@ -105,7 +105,7 @@ country_code_mapping = {
 }
 
 # Initialize cache
-cache = DataFrameCache(expiration_minutes=60)  # In-memory caching system
+cache = DataFrameCache(expiration_minutes=15)  # In-memory caching system
 
 
 # @task(retries=3, cache_policy=INPUTS, cache_expiration=timedelta(minutes=60))
@@ -128,8 +128,12 @@ def load_gadm_data(file_path):
         return None
 
     try:
+        print("PREFER reading file instead:")
         df = gpd.read_file(file_path)  # Read file
+        print("setting the cache")
         cache.set(cache_key, df)  # Cache the DataFrame
+        print("check cache:")
+        print(cache.get(cache_key))
         print(f"Data loaded and cached for: {file_path}")
         return df
     except Exception as e:
@@ -180,6 +184,7 @@ def convert_gdf_to_polars(gdf, level):
         gdf = gdf[dataframe_mapping["ADM2"]]
 
     df = pl.DataFrame(gdf)
+    df.filter(df["country_code"].is_not_null())
     # df = df.with_columns(pl.lit(level).alias("gadm_level"))
     # print(df.head())
     return df

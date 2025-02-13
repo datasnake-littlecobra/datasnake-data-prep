@@ -96,10 +96,10 @@ def batch_insert_cassandra_async(session, gadm_level, dataframe, concurrency=20)
         prepared = session.prepare(insert_query)
 
         args = [
-            tuple(row[col] if col in row else None for col in columns)
-            for row in dataframe.iter_rows()
+            [row[col] if col in row else None for col in columns]
+            for row in dataframe.iter_rows(named=True)
         ]
-        
+
         print("printing args:")
         for arg in args:
             print(arg)
