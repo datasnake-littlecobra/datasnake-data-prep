@@ -7,6 +7,7 @@ from datetime import timedelta
 import polars as pl
 import geopandas as gpd
 from deltalake.writer import write_deltalake
+from save_gadm_to_cassandra_dev import save_to_cassandra_main
 from DataFrameCache import DataFrameCache
 
 # comment for dev
@@ -215,6 +216,12 @@ def process_gadm_level(level: str):
         # upload_raw_delta_to_s3_prod(
         #     df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
         # )
+        cluster_ips = "127.0.0.1"
+        keyspace = "datasnake_data_prep_keyspace"
+
+        save_to_cassandra_main(
+            df, cluster_ips, keyspace, level
+        )
     else:
         print(f"Skipping {level} due to missing data.")
         logger.warning(f"Skipping {level} due to missing data.")
