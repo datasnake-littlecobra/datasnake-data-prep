@@ -56,6 +56,22 @@ deltalake_partitions = {
     "ADM1": ["country_code"],
     "ADM2": ["country_code"],
 }
+dataframe_mapping = {
+    "ADM0": [
+        "country_code",
+        "gadm_level",
+        "country_full_name",
+        "wkt_geometry_country",
+    ],
+    "ADM1": ["shapeID", "country_code", "state", "gadm_level", "wkt_geometry_state"],
+    "ADM2": [
+        "shapeID",
+        "country_code",
+        "city",
+        "gadm_level",
+        "wkt_geometry_city",
+    ],
+}
 deltalake_gadm_s3_uri = {
     "ADM0": f"s3://deltalake-gadm/gadm0",
     "ADM1": f"s3://deltalake-gadm/gadm1",
@@ -132,6 +148,8 @@ def convert_gdf_to_polars(gdf, level):
         gdf["wkt_geometry_country"] = gdf["geometry"].apply(
             lambda geom: geom.wkt if geom else None
         )
+        # gdf.drop(columns=["geometry"])
+        gdf = gdf[dataframe_mapping["ADM0"]]
 
     elif level == "ADM1":
         gdf.rename(columns={"shapeGroup": "country_code"}, inplace=True)
@@ -141,6 +159,9 @@ def convert_gdf_to_polars(gdf, level):
         gdf["wkt_geometry_state"] = gdf["geometry"].apply(
             lambda geom: geom.wkt if geom else None
         )
+        # gdf.drop(columns=["geometry"])
+        gdf = gdf[dataframe_mapping["ADM1"]]
+
     elif level == "ADM2":
         gdf.rename(columns={"shapeGroup": "country_code"}, inplace=True)
         gdf.rename(columns={"shapeType": "gadm_level"}, inplace=True)
@@ -149,8 +170,10 @@ def convert_gdf_to_polars(gdf, level):
         gdf["wkt_geometry_city"] = gdf["geometry"].apply(
             lambda geom: geom.wkt if geom else None
         )
+        # gdf.drop(columns=["geometry"])
+        gdf = gdf[dataframe_mapping["ADM2"]]
 
-    df = pl.DataFrame(gdf.drop(columns=["geometry"]))
+    df = pl.DataFrame(gdf)
     # df = df.with_columns(pl.lit(level).alias("gadm_level"))
     # print(df.head())
     return df

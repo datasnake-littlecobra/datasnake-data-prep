@@ -1,5 +1,7 @@
 import os
 import logging
+
+# import argparse
 from prefect import flow, task
 import time
 from datetime import datetime
@@ -7,6 +9,7 @@ from datetime import timedelta
 import polars as pl
 import geopandas as gpd
 from deltalake.writer import write_deltalake
+from save_gadm_to_cassandra import save_to_cassandra_main
 from DataFrameCache import DataFrameCache
 
 # from push_to_deltalake_prod import save_to_deltalake_local
@@ -53,6 +56,27 @@ deltalake_partitions = {
     "ADM0": [],
     "ADM1": ["country_code"],
     "ADM2": ["country_code"],
+}
+dataframe_mapping = {
+    "ADM0": [
+        "country_code",
+        "gadm_level",
+        "country_full_name",
+        "wkt_geometry_country",
+    ],
+    "ADM1": ["shapeID", "country_code", "state", "gadm_level", "wkt_geometry_state"],
+    "ADM2": [
+        "shapeID",
+        "country_code",
+        "city",
+        "gadm_level",
+        "wkt_geometry_city",
+    ],
+}
+cassandra_table_names = {
+    "ADM0": "gadm0_data",
+    "ADM1": "gadm1_data",
+    "ADM2": "gadm2_data",
 }
 deltalake_gadm_s3_uri = {
     "ADM0": f"s3://deltalake-gadm/gadm0",
@@ -130,6 +154,8 @@ def convert_gdf_to_polars(gdf, level):
         gdf["wkt_geometry_country"] = gdf["geometry"].apply(
             lambda geom: geom.wkt if geom else None
         )
+        # gdf.drop(columns=["geometry"])
+        gdf = gdf[dataframe_mapping["ADM0"]]
 
     elif level == "ADM1":
         gdf.rename(columns={"shapeGroup": "country_code"}, inplace=True)
@@ -139,6 +165,9 @@ def convert_gdf_to_polars(gdf, level):
         gdf["wkt_geometry_state"] = gdf["geometry"].apply(
             lambda geom: geom.wkt if geom else None
         )
+        # gdf.drop(columns=["geometry"])
+        gdf = gdf[dataframe_mapping["ADM1"]]
+
     elif level == "ADM2":
         gdf.rename(columns={"shapeGroup": "country_code"}, inplace=True)
         gdf.rename(columns={"shapeType": "gadm_level"}, inplace=True)
@@ -147,8 +176,10 @@ def convert_gdf_to_polars(gdf, level):
         gdf["wkt_geometry_city"] = gdf["geometry"].apply(
             lambda geom: geom.wkt if geom else None
         )
+        # gdf.drop(columns=["geometry"])
+        gdf = gdf[dataframe_mapping["ADM2"]]
 
-    df = pl.DataFrame(gdf.drop(columns=["geometry"]))
+    df = pl.DataFrame(gdf)
     # df = df.with_columns(pl.lit(level).alias("gadm_level"))
     # print(df.head())
     return df
@@ -186,9 +217,18 @@ def process_gadm_level(level: str):
         logger.info(
             f"Uploading the raw delta lake to Object Storage...{deltalake_gadm_s3_uri[level]} , with partitions as {deltalake_partitions[level]}"
         )
-        
+
         upload_raw_delta_to_s3_prod(
             df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
+        )
+        cluster_ips = "127.0.0.1"
+        keyspace = "datasnake_data_prep_keyspace"
+        
+        save_to_cassandra_main(
+            df,
+            cluster_ips,
+            keyspace,
+            cassandra_table_names[level],
         )
     else:
         print(f"Skipping {level} due to missing data.")
