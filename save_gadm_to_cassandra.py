@@ -101,7 +101,7 @@ def batch_insert_cassandra_async(
         
         args = [
             tuple(row[col] if col in row else None for col in columns)
-            for _, row in dataframe.iterrows()
+            for _, row in dataframe.iter_rows()
         ]
 
         # results = execute_concurrent(session, [(prepared, row) for row in args], concurrency=concurrency)
