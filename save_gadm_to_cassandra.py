@@ -11,8 +11,11 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
     session = None
     try:
         logging.info("Inside Cassandra Connect call:")
+        print("Inside Cassandra Connect call:")
         logging.info(cluster_ips.split(","))
         logging.info(keyspace)
+        print(cluster_ips.split(","))
+        print(keyspace)
         session = connect_cassandra(cluster_ips.split(","), keyspace)
         # optimized_batch_insert_cassandra(
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
@@ -27,7 +30,8 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
     finally:
         if session is not None:  # Check if session was successfully created
             logging.info("Closing Cassandra session...")
-            session.shutdown()
+            # session.shutdown()
+            raise
 
 
 def connect_cassandra(cluster_ips, keyspace):
@@ -44,7 +48,7 @@ def connect_cassandra(cluster_ips, keyspace):
             # protocol_version=5,  # Adjust based on your cluster version
         )  # Replace with container's IP if needed
         session = cluster.connect()
-        # session.set_keyspace(keyspace)
+        session.set_keyspace(keyspace)
         logging.info("Connected to cassandra...")
         return session
     except Exception as e:
