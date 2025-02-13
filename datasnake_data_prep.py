@@ -205,7 +205,7 @@ def process_gadm_level(level: str):
         df = convert_gdf_to_polars(gdf, level)
         import gc
 
-        del geodf  # Remove the GeoDataFrame to free up memory
+        del gdf  # Remove the GeoDataFrame to free up memory
         gc.collect()  # Force garbage collection
         
         print(df.head())
