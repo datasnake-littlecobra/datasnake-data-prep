@@ -8,29 +8,26 @@ DROP TABLE gadm2_data;
 -- Clustering Keys: state, city, gadm_level
 -- Reasoning: Efficient searches based on a known country → state → city hierarchy
 CREATE TABLE IF NOT EXISTS gadm0_data (
-    id TEXT,
     country_code TEXT,
-    gadm_level TEXT,
     country_full_name TEXT,
+    gadm_level TEXT,
     wkt_geometry_country TEXT,
     PRIMARY KEY (country_code)
 );
 
 CREATE TABLE IF NOT EXISTS gadm1_data (
-    id TEXT,
+    country_code TEXT,
     state TEXT,
     shapeID TEXT,
-    country_code TEXT,
     gadm_level TEXT,
     wkt_geometry_state TEXT,
     PRIMARY KEY (country_code, state)
 );
 
 CREATE TABLE IF NOT EXISTS gadm2_data (
-    id TEXT,
+    country_code TEXT,
     city TEXT,
     shapeID TEXT,
-    country_code TEXT,
     gadm_level TEXT,    
     wkt_geometry_city TEXT,
     PRIMARY KEY (country_code, city)

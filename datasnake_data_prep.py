@@ -60,15 +60,15 @@ deltalake_partitions = {
 dataframe_mapping = {
     "ADM0": [
         "country_code",
-        "gadm_level",
         "country_full_name",
+        "gadm_level",
         "wkt_geometry_country",
     ],
-    "ADM1": ["shapeID", "country_code", "state", "gadm_level", "wkt_geometry_state"],
+    "ADM1": ["country_code", "state", "shapeID", "gadm_level", "wkt_geometry_state"],
     "ADM2": [
-        "shapeID",
         "country_code",
         "city",
+        "shapeID",
         "gadm_level",
         "wkt_geometry_city",
     ],
@@ -223,13 +223,8 @@ def process_gadm_level(level: str):
         )
         cluster_ips = "127.0.0.1"
         keyspace = "datasnake_data_prep_keyspace"
-        
-        save_to_cassandra_main(
-            df,
-            cluster_ips,
-            keyspace,
-            level
-        )
+
+        save_to_cassandra_main(df, cluster_ips, keyspace, level)
     else:
         print(f"Skipping {level} due to missing data.")
         logger.warning(f"Skipping {level} due to missing data.")

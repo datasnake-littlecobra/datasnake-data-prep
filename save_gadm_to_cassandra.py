@@ -66,7 +66,6 @@ def batch_insert_cassandra_async(
                 "table_name": "gadm2_data",
                 "columns": [
                     "country_code",
-                    "state",
                     "city",
                     "shapeID",
                     "gadm_level",
