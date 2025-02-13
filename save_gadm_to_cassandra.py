@@ -6,12 +6,18 @@ import logging
 
 
 def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
-    logging.info("Inside Cassandra Connect call:")
-    logging.info(cluster_ips.split(","))
-    logging.info(keyspace)
-    session = connect_cassandra(cluster_ips.split(","), keyspace)
-    # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-    batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
+    try:
+        logging.info("Inside Cassandra Connect call:")
+        logging.info(cluster_ips.split(","))
+        logging.info(keyspace)
+        session = connect_cassandra(cluster_ips.split(","), keyspace)
+        # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
+        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
+    except Exception as e:
+        logging.error(f"Error writing to Cassandra: {e}")
+    finally:
+        logging.info("Closing Cassandra session...")
+        session.shutdown()
 
 
 def connect_cassandra(cluster_ips, keyspace):
@@ -98,7 +104,7 @@ def batch_insert_cassandra_async(
         prepared = session.prepare(insert_query)
 
         args = [
-            [row[col] if col in row else None for col in columns]
+            tuple(row[col] if col in row else None for col in columns)
             for row in dataframe.iter_rows(named=True)
         ]
 
