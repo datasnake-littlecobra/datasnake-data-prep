@@ -14,7 +14,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         logging.info(keyspace)
         session = connect_cassandra(cluster_ips.split(","), keyspace)
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
+        # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
         optimized_insert_cassandra(
             session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         )
@@ -82,12 +82,7 @@ def optimized_insert_cassandra(
                 ],
             },
         }
-        # Process in chunks of 10,000 records
-        # chunk_size = 10000
-        # for i in range(0, len(dataframe), chunk_size):
-        #     chunk = dataframe[i:i + chunk_size]
-        #     async_insert_cassandra(session, table_name, chunk, concurrency=20)
-        # logging.info(f"Starting to write into cassandra: {table_name}")
+
         table_info = table_mapping[gadm_level]
         table_name = table_info["table_name"]
         columns = table_info["columns"]
