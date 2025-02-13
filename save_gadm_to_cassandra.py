@@ -12,9 +12,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
     logging.info(keyspace)
     session = connect_cassandra(cluster_ips.split(","), keyspace)
     # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-    batch_insert_cassandra_async(
-        session, gadm_level, df, concurrency=10
-    )
+    batch_insert_cassandra_async(session, gadm_level, df, concurrency=10)
 
 
 def connect_cassandra(cluster_ips, keyspace):
@@ -36,9 +34,7 @@ def connect_cassandra(cluster_ips, keyspace):
         raise
 
 
-def batch_insert_cassandra_async(
-    session, gadm_level, dataframe, concurrency=20
-):
+def batch_insert_cassandra_async(session, gadm_level, dataframe, concurrency=20):
     try:
         """Insert data into Cassandra asynchronously."""
         # Step 2: Define table structures dynamically
@@ -96,13 +92,17 @@ def batch_insert_cassandra_async(
         print(column_names)
         print(placeholders)
         print(insert_query)
-        
+
         prepared = session.prepare(insert_query)
-        
+
         args = [
             tuple(row[col] if col in row else None for col in columns)
-            for _, row in dataframe.iter_rows()
+            for row in dataframe.iter_rows()
         ]
+        
+        print("printing args:")
+        for arg in args:
+            print(arg)
 
         # results = execute_concurrent(session, [(prepared, row) for row in args], concurrency=concurrency)
         results = execute_concurrent_with_args(
