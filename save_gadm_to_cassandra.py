@@ -109,10 +109,14 @@ def optimized_insert_cassandra(
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
             futures = []
 
-            for i in range(0, len(dataframe), batch_size):
+            batch_size = 1000
+            rows = list(df.iter_rows())
+
+            for i in range(0, len(rows), batch_size):
                 batch = BatchStatement()
-                for _, row in dataframe.iloc[i : i + batch_size].iterrows():
-                    batch.add(prepared, (row["col1"], row["col2"], row["col3"]))
+                for row in rows[i:i + batch_size]:
+                    batch.add(prepared, tuple(row))  # Use tuple(row) for batch insert
+                    # session.execute(batch)
 
                 futures.append(executor.submit(session.execute, batch))
 
