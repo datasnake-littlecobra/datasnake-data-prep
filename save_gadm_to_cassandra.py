@@ -1,5 +1,3 @@
-import geojson
-import time
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.query import BatchStatement
