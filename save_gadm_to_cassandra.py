@@ -110,7 +110,7 @@ def optimized_insert_cassandra(
             futures = []
 
             batch_size = 1000
-            rows = list(df.iter_rows())
+            rows = list(dataframe.iter_rows())
 
             for i in range(0, len(rows), batch_size):
                 batch = BatchStatement()
