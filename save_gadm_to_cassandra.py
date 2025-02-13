@@ -13,11 +13,14 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         logging.info(cluster_ips.split(","))
         logging.info(keyspace)
         session = connect_cassandra(cluster_ips.split(","), keyspace)
+        optimized_batch_insert_cassandra(
+            session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
+        )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
         # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
-        optimized_insert_cassandra(
-            session, keyspace, gadm_level, df, concurrency=5, batch_size=100
-        )
+        # optimized_insert_cassandra(
+        #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
+        # )
     except Exception as e:
         logging.error(f"Error writing to Cassandra: {e}")
     finally:
@@ -44,6 +47,75 @@ def connect_cassandra(cluster_ips, keyspace):
         return session
     except Exception as e:
         logging.error(f"Failed to connect to Cassandra: {e}")
+        raise
+
+
+from cassandra.query import BatchStatement
+import logging
+import time
+
+
+def optimized_batch_insert_cassandra(
+    session, keyspace, gadm_level, dataframe, batch_size=50, sleep_time=0.1
+):
+    try:
+        table_mapping = {
+            "ADM0": {
+                "table_name": "gadm0_data",
+                "columns": [
+                    "country_code",
+                    "country_full_name",
+                    "gadm_level",
+                    "wkt_geometry_country",
+                ],
+            },
+            "ADM1": {
+                "table_name": "gadm1_data",
+                "columns": [
+                    "country_code",
+                    "state",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_state",
+                ],
+            },
+            "ADM2": {
+                "table_name": "gadm2_data",
+                "columns": [
+                    "country_code",
+                    "city",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_city",
+                ],
+            },
+        }
+
+        table_info = table_mapping[gadm_level]
+        table_name = table_info["table_name"]
+        columns = table_info["columns"]
+
+        column_names = ", ".join(columns)
+        placeholders = ", ".join(["?"] * len(columns))
+        insert_query = f"INSERT INTO {keyspace}.{table_name} ({column_names}) VALUES ({placeholders})"
+
+        prepared = session.prepare(insert_query)
+
+        rows = [tuple(row) for row in dataframe.iter_rows()]
+
+        for i in range(0, len(rows), batch_size):
+            batch = BatchStatement()
+            for row in rows[i : i + batch_size]:
+                batch.add(prepared, row)
+
+            session.execute(batch)
+
+            time.sleep(sleep_time)  # Throttle inserts slightly to prevent overloading
+
+        logging.info(f"Successfully inserted {len(rows)} records into {table_name}")
+
+    except Exception as e:
+        logging.error(f"Errored out writing to Cassandra: {e}")
         raise
 
 
@@ -114,7 +186,7 @@ def optimized_insert_cassandra(
 
             for i in range(0, len(rows), batch_size):
                 batch = BatchStatement()
-                for row in rows[i:i + batch_size]:
+                for row in rows[i : i + batch_size]:
                     batch.add(prepared, tuple(row))  # Use tuple(row) for batch insert
                     # session.execute(batch)
 
