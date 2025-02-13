@@ -25,8 +25,9 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
     except Exception as e:
         logging.error(f"Error writing to Cassandra: {e}")
     finally:
-        logging.info("Closing Cassandra session...")
-        session.shutdown()
+        if session is not None:  # Check if session was successfully created
+            logging.info("Closing Cassandra session...")
+            session.shutdown()
 
 
 def connect_cassandra(cluster_ips, keyspace):
@@ -39,8 +40,8 @@ def connect_cassandra(cluster_ips, keyspace):
         cluster = Cluster(
             cluster_ips,
             auth_provider=auth_provider,
-            load_balancing_policy=DCAwareRoundRobinPolicy(),
-            protocol_version=5,  # Adjust based on your cluster version
+            # load_balancing_policy=DCAwareRoundRobinPolicy(),
+            # protocol_version=5,  # Adjust based on your cluster version
         )  # Replace with container's IP if needed
         session = cluster.connect()
         # session.set_keyspace(keyspace)
