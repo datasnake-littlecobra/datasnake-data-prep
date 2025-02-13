@@ -1,7 +1,6 @@
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
-from cassandra.query import BatchStatement
-from cassandra import ConsistencyLevel
+from cassandra.policies import DCAwareRoundRobinPolicy
 from cassandra.concurrent import execute_concurrent_with_args
 import logging
 
@@ -12,7 +11,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
     logging.info(keyspace)
     session = connect_cassandra(cluster_ips.split(","), keyspace)
     # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-    batch_insert_cassandra_async(session, gadm_level, df, concurrency=20)
+    batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
 
 
 def connect_cassandra(cluster_ips, keyspace):
@@ -23,10 +22,13 @@ def connect_cassandra(cluster_ips, keyspace):
         PASSWORD = "cassandra"
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
         cluster = Cluster(
-            cluster_ips, auth_provider=auth_provider
+            cluster_ips,
+            auth_provider=auth_provider,
+            load_balancing_policy=DCAwareRoundRobinPolicy(),
+            protocol_version=5,  # Adjust based on your cluster version
         )  # Replace with container's IP if needed
         session = cluster.connect()
-        session.set_keyspace(keyspace)
+        # session.set_keyspace(keyspace)
         logging.info("Connected to cassandra...")
         return session
     except Exception as e:
@@ -34,7 +36,9 @@ def connect_cassandra(cluster_ips, keyspace):
         raise
 
 
-def batch_insert_cassandra_async(session, gadm_level, dataframe, concurrency=20):
+def batch_insert_cassandra_async(
+    session, keyspace, gadm_level, dataframe, concurrency=20
+):
     try:
         """Insert data into Cassandra asynchronously."""
         # Step 2: Define table structures dynamically
@@ -85,9 +89,7 @@ def batch_insert_cassandra_async(session, gadm_level, dataframe, concurrency=20)
             ["?"] * len(columns)
         )  # Cassandra uses %s as placeholders
 
-        insert_query = (
-            f"INSERT INTO {table_name} ({column_names}) VALUES ({placeholders})"
-        )
+        insert_query = f"INSERT INTO {keyspace}.{table_name} ({column_names}) VALUES ({placeholders})"
         # print("printing cassandra variables:")
         # print(column_names)
         # print(placeholders)
