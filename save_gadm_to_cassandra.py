@@ -8,6 +8,7 @@ import logging
 
 
 def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
+    session = None
     try:
         logging.info("Inside Cassandra Connect call:")
         logging.info(cluster_ips.split(","))
