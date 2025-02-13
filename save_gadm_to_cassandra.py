@@ -13,11 +13,11 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         logging.info(cluster_ips.split(","))
         logging.info(keyspace)
         session = connect_cassandra(cluster_ips.split(","), keyspace)
-        # optimized_batch_insert_cassandra(
-        #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
-        # )
+        optimized_batch_insert_cassandra(
+            session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
+        )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
+        # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=5)
         # optimized_insert_cassandra(
         #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         # )
