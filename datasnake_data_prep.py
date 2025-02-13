@@ -203,6 +203,11 @@ def process_gadm_level(level: str):
 
     if gdf is not None:
         df = convert_gdf_to_polars(gdf, level)
+        import gc
+
+        del geodf  # Remove the GeoDataFrame to free up memory
+        gc.collect()  # Force garbage collection
+        
         print(df.head())
         # ✅ Measure Size
         df_size_mb = df.estimated_size() / (1024 * 1024)  # Convert bytes to MB
@@ -223,9 +228,9 @@ def process_gadm_level(level: str):
             f"Uploading the raw delta lake to Object Storage...{deltalake_gadm_s3_uri[level]} , with partitions as {deltalake_partitions[level]}"
         )
 
-        upload_raw_delta_to_s3_prod(
-            df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
-        )
+        # upload_raw_delta_to_s3_prod(
+        #     df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
+        # )
 
         # Cassandra
         start_time = time.time()
