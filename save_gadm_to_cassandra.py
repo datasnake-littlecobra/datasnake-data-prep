@@ -19,8 +19,31 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         logging.info(keyspace)
         print(cluster_ips.split(","))
         print(keyspace)
-        session = connect_cassandra(keyspace="test_keyspace")
-        insert_sample_data(session)
+        # session = connect_cassandra(keyspace)
+        USERNAME = "cassandra"
+        PASSWORD = "cassandra"
+        CASSANDRA_HOSTS = ["127.0.0.1"]
+        auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
+        cluster = Cluster(CASSANDRA_HOSTS, auth_provider=auth_provider)
+        session = cluster.connect()
+        session.set_keyspace("test_keyspace")
+        dataframe = pl.DataFrame(
+            {"stock_id": [uuid4() for _ in range(3)]},
+            {"symbol": ["AAPL", "NSFT", "GOOG"]},
+            {"price": [140, 134, 142]},
+            {"timestamp": [datetime.datetime.now() for _ in range(3)]},
+        )
+        print(dataframe.head())
+        print("inserting into stocks table")
+        insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (%s,%s,%s,%s) IF NOT EXISTS"
+        data = [
+            (row["stock_id"], row["symbol"], row["price"], row["timestamp"])
+            for row in dataframe.to_dicts()
+        ]
+        for row in data:
+            session.execute(insertquery, row)
+            print("data inserted successfully")
+        # insert_sample_data(session)
         # optimized_batch_insert_cassandra(
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
         # )
