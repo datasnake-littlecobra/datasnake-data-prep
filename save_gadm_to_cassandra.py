@@ -19,7 +19,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace: str, gadm_level: str):
         logging.info(keyspace)
         print(cluster_ips.split(","))
         print(keyspace)
-        session = connect_cassandra(keyspace)
+        # session = connect_cassandra(keyspace)
         USERNAME = "cassandra"
         PASSWORD = "cassandra"
         CASSANDRA_HOSTS = ["127.0.0.1"]
