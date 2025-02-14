@@ -14,7 +14,8 @@ def save_to_cassandra_main(df, gadm_level: str):
     # session = None
     try:
         logging.info("Inside Cassandra Connect call:")
-        print("Inside Cassandra Connect call:")
+        print("Inside Cassandra Connect call with dataframe:")
+        print(df.head())
         # logging.info(cluster_ips.split(","))
         # logging.info(keyspace)
         # print(cluster_ips.split(","))
@@ -56,7 +57,8 @@ def save_to_cassandra_main(df, gadm_level: str):
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
         # )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-        batch_insert_cassandra_async(session, keyspace="datasnake_data_prep_keyspace", gadm_level, df, concurrency=10)
+        keyspace="datasnake_data_prep_keyspace"
+        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
         # optimized_insert_cassandra(
         #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         # )
