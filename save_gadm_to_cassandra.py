@@ -30,7 +30,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         print("cassandra connection established!")
         dataframe = pl.DataFrame(
             {"stock_id": [uuid4() for _ in range(3)]},
-            {"symbol": ["AAPL", "NSFT", "GOOG"]},
+            {"symbol": ["AAPL", "MSFT", "GOOG"]},
             {"price": [140, 134, 142]},
             {"timestamp": [datetime.datetime.now() for _ in range(3)]},
         )
