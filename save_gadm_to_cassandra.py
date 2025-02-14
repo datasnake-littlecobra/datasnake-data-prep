@@ -43,7 +43,8 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         #     for row in dataframe.to_dicts()
         # ]
         # for row in data:
-        session.execute(insertquery, row)
+        print(insertquery)
+        session.execute(insertquery)
         print("data inserted successfully")
         # insert_sample_data(session)
         # optimized_batch_insert_cassandra(
