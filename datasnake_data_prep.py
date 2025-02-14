@@ -2,7 +2,6 @@ import os
 import logging
 
 # import argparse
-from prefect import flow, task
 import time
 from datetime import datetime
 from datetime import timedelta
@@ -16,7 +15,7 @@ from DataFrameCache import DataFrameCache
 from push_to_deltalake_prod import upload_raw_delta_to_s3_prod
 
 # ✅ Set up logging to BOTH Console & File
-logger = logging.getLogger("prefect")
+logger = logging.getLogger("GADM")
 logger.setLevel(logging.INFO)  # Log everything including debug
 
 # ✅ Add File Handler
@@ -108,8 +107,6 @@ country_code_mapping = {
 cache = DataFrameCache(expiration_minutes=15)  # In-memory caching system
 
 
-# @task(retries=3, cache_policy=INPUTS, cache_expiration=timedelta(minutes=60))
-@task(retries=3, cache_policy=None)
 def load_gadm_data(file_path):
     """Load GADM data from a GeoPackage file into a GeoDataFrame with caching."""
 
@@ -190,7 +187,6 @@ def convert_gdf_to_polars(gdf, level):
     return df
 
 
-@flow(log_prints=True)
 def process_gadm_level(level: str):
     """Process a single GADM level and store it, measuring time and size."""
     print(f"Processing {level} with file positioned at {gadm_paths_datasnake[level]}")
@@ -236,7 +232,7 @@ def process_gadm_level(level: str):
         start_time = time.time()
         cluster_ips = "127.0.0.1"
         keyspace = "datasnake_data_prep_keyspace"
-        save_to_cassandra_main(df, cluster_ips, keyspace)
+        save_to_cassandra_main(df, cluster_ips, keyspace, level)
         end_time = time.time()
         time_taken = end_time - start_time
         logger.info(f"Total time take to store gadm_{level} : {time_taken}")
@@ -245,7 +241,6 @@ def process_gadm_level(level: str):
         logger.warning(f"Skipping {level} due to missing data.")
 
 
-@flow(log_prints=True)
 def process_all_gadm_levels():
     """Process and store each GADM level one at a time."""
     for level in gadm_paths_datasnake.keys():
