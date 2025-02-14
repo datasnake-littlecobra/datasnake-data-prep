@@ -11,7 +11,7 @@ import logging
 
 
 def save_to_cassandra_main():
-    session = None
+    # session = None
     try:
         logging.info("Inside Cassandra Connect call:")
         print("Inside Cassandra Connect call:")
