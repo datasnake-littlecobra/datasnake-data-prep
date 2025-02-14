@@ -203,7 +203,7 @@ def process_gadm_level(level: str):
 
         del gdf  # Remove the GeoDataFrame to free up memory
         gc.collect()  # Force garbage collection
-        
+
         print(df.head())
         # ✅ Measure Size
         df_size_mb = df.estimated_size() / (1024 * 1024)  # Convert bytes to MB
@@ -232,6 +232,7 @@ def process_gadm_level(level: str):
         start_time = time.time()
         cluster_ips = "127.0.0.1"
         keyspace = "datasnake_data_prep_keyspace"
+        print("sending dataframe to cassandra:")
         print(df.head())
         save_to_cassandra_main(df, level)
         end_time = time.time()
