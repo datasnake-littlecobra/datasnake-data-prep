@@ -128,7 +128,6 @@ def optimized_batch_insert_cassandra(
                     "country_code",
                     "country_full_name",
                     "gadm_level",
-                    "wkt_geometry_country",
                 ],
             },
             "ADM1": {
@@ -138,7 +137,6 @@ def optimized_batch_insert_cassandra(
                     "state",
                     "shapeID",
                     "gadm_level",
-                    "wkt_geometry_state",
                 ],
             },
             "ADM2": {
@@ -148,7 +146,6 @@ def optimized_batch_insert_cassandra(
                     "city",
                     "shapeID",
                     "gadm_level",
-                    "wkt_geometry_city",
                 ],
             },
         }

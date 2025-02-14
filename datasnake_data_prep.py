@@ -61,15 +61,15 @@ dataframe_mapping = {
         "country_code",
         "country_full_name",
         "gadm_level",
-        "wkt_geometry_country",
+        # "wkt_geometry_country",
     ],
-    "ADM1": ["country_code", "state", "shapeID", "gadm_level", "wkt_geometry_state"],
+    "ADM1": ["country_code", "state", "shapeID", "gadm_level"],  # "wkt_geometry_state"
     "ADM2": [
         "country_code",
         "city",
         "shapeID",
         "gadm_level",
-        "wkt_geometry_city",
+        # "wkt_geometry_city",
     ],
 }
 cassandra_table_names = {

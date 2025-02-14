@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS gadm0_data (
     country_code TEXT,
     country_full_name TEXT,
     gadm_level TEXT,
-    wkt_geometry_country TEXT,
     PRIMARY KEY (country_code)
 );
 
@@ -20,7 +19,6 @@ CREATE TABLE IF NOT EXISTS gadm1_data (
     state TEXT,
     shapeID TEXT,
     gadm_level TEXT,
-    wkt_geometry_state TEXT,
     PRIMARY KEY (country_code, state)
 );
 
@@ -29,7 +27,6 @@ CREATE TABLE IF NOT EXISTS gadm2_data (
     city TEXT,
     shapeID TEXT,
     gadm_level TEXT,    
-    wkt_geometry_city TEXT,
     PRIMARY KEY (country_code, city)
 );
 
