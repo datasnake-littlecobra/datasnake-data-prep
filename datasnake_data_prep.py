@@ -12,7 +12,7 @@ from save_gadm_to_cassandra import save_to_cassandra_main
 from DataFrameCache import DataFrameCache
 
 # from push_to_deltalake_prod import save_to_deltalake_local
-from push_to_deltalake_prod import upload_raw_delta_to_s3_prod
+# from push_to_deltalake_prod import upload_raw_delta_to_s3_prod
 
 # ✅ Set up logging to BOTH Console & File
 logger = logging.getLogger("GADM")
