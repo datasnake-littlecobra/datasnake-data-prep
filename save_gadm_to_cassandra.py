@@ -35,7 +35,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace: str, gadm_level: str):
         #     {"timestamp": [datetime.datetime.now() for _ in range(3)]},
         # )
         print("dataframe is ready!")
-        # print(dataframe.head())
+        print(df.head())
         print("inserting into stocks table")
         insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (uuid(),'AAPL',140,toTimestamp(now())) IF NOT EXISTS"
         # data = [
@@ -51,7 +51,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace: str, gadm_level: str):
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
         # )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
+        # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
         # optimized_insert_cassandra(
         #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         # )
