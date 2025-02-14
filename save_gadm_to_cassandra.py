@@ -10,23 +10,28 @@ from cassandra.concurrent import execute_concurrent_with_args
 import logging
 
 
-def save_to_cassandra_main(df, cluster_ips, keyspace: str, gadm_level: str):
+def save_to_cassandra_main():
     session = None
     try:
         logging.info("Inside Cassandra Connect call:")
         print("Inside Cassandra Connect call:")
-        logging.info(cluster_ips.split(","))
-        logging.info(keyspace)
-        print(cluster_ips.split(","))
-        print(keyspace)
+        # logging.info(cluster_ips.split(","))
+        # logging.info(keyspace)
+        # print(cluster_ips.split(","))
+        # print(keyspace)
         # session = connect_cassandra(keyspace)
         USERNAME = "cassandra"
         PASSWORD = "cassandra"
         CASSANDRA_HOSTS = ["127.0.0.1"]
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
-        cluster = Cluster(CASSANDRA_HOSTS, auth_provider=auth_provider)
+        cluster = Cluster(
+            contact_points=CASSANDRA_HOSTS,
+            auth_provider=auth_provider,
+            protocol_version=4,  # Stay on version 4
+            load_balancing_policy=DCAwareRoundRobinPolicy(local_dc="datacenter1"),
+        )
         session = cluster.connect()
-        session.set_keyspace("test_keyspace") # datasnake_data_prep_keyspace
+        session.set_keyspace("test_keyspace")  # datasnake_data_prep_keyspace
         print("cassandra connection established!")
         # dataframe = pl.DataFrame(
         #     {"stock_id": [uuid4() for _ in range(3)]},
@@ -35,7 +40,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace: str, gadm_level: str):
         #     {"timestamp": [datetime.datetime.now() for _ in range(3)]},
         # )
         print("dataframe is ready!")
-        print(df.head())
+        # print(df.head())
         print("inserting into stocks table")
         insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (uuid(),'AAPL',140,toTimestamp(now())) IF NOT EXISTS"
         # data = [
