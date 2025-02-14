@@ -117,7 +117,7 @@ import time
 
 
 def optimized_batch_insert_cassandra(
-    session, keyspace, gadm_level, dataframe, batch_size=50, sleep_time=0.1
+    session, keyspace, gadm_level, dataframe, batch_size=5, sleep_time=0.1
 ):
     try:
         table_mapping = {
