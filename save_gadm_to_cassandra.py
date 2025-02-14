@@ -34,6 +34,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
             {"price": [140, 134, 142]},
             {"timestamp": [datetime.datetime.now() for _ in range(3)]},
         )
+        print("dataframe is ready!")
         print(dataframe.head())
         print("inserting into stocks table")
         insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (%s,%s,%s,%s) IF NOT EXISTS"
