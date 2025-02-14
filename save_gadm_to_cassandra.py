@@ -28,23 +28,23 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         session = cluster.connect()
         session.set_keyspace("test_keyspace")
         print("cassandra connection established!")
-        dataframe = pl.DataFrame(
-            {"stock_id": [uuid4() for _ in range(3)]},
-            {"symbol": ["AAPL", "MSFT", "GOOG"]},
-            {"price": [140, 134, 142]},
-            {"timestamp": [datetime.datetime.now() for _ in range(3)]},
-        )
+        # dataframe = pl.DataFrame(
+        #     {"stock_id": [uuid4() for _ in range(3)]},
+        #     {"symbol": ["AAPL", "MSFT", "GOOG"]},
+        #     {"price": [140, 134, 142]},
+        #     {"timestamp": [datetime.datetime.now() for _ in range(3)]},
+        # )
         print("dataframe is ready!")
-        print(dataframe.head())
+        # print(dataframe.head())
         print("inserting into stocks table")
-        insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (%s,%s,%s,%s) IF NOT EXISTS"
-        data = [
-            (row["stock_id"], row["symbol"], row["price"], row["timestamp"])
-            for row in dataframe.to_dicts()
-        ]
-        for row in data:
-            session.execute(insertquery, row)
-            print("data inserted successfully")
+        insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (uuid(),'AAPL',140,toTimestamp(now())) IF NOT EXISTS"
+        # data = [
+        #     (row["stock_id"], row["symbol"], row["price"], row["timestamp"])
+        #     for row in dataframe.to_dicts()
+        # ]
+        # for row in data:
+        session.execute(insertquery, row)
+        print("data inserted successfully")
         # insert_sample_data(session)
         # optimized_batch_insert_cassandra(
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
