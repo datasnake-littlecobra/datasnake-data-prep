@@ -54,4 +54,4 @@ CREATE TABLE IF NOT EXISTS stocks (
     price FLOAT,
     timestamp TIMESTAMP,
     PRIMARY KEY (symbol, timestamp )
-) WITH CLUSTERING ORDER BY ( timestamp DESC )
+) WITH CLUSTERING ORDER BY ( timestamp DESC );
