@@ -232,7 +232,7 @@ def process_gadm_level(level: str):
         start_time = time.time()
         cluster_ips = "127.0.0.1"
         keyspace = "datasnake_data_prep_keyspace"
-        print("sending dataframe to cassandra:")
+        print("sending dataframe to cassandra main:")
         print(df.head())
         save_to_cassandra_main(df, level)
         end_time = time.time()
