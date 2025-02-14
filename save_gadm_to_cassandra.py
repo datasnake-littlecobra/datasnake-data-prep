@@ -1,3 +1,6 @@
+from uuid import uuid4
+import datetime
+import polars as pl
 from cassandra.query import BatchStatement
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from cassandra.cluster import Cluster
@@ -17,11 +20,12 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         print(cluster_ips.split(","))
         print(keyspace)
         session = connect_cassandra(keyspace)
+        insert_sample_data(session)
         # optimized_batch_insert_cassandra(
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
         # )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
+        # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
         # optimized_insert_cassandra(
         #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         # )
@@ -34,6 +38,25 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
             raise
 
 
+def insert_sample_data(session):
+    try:
+        dataframe = pl.DataFrame(
+            {"stock_id": [uuid4() for _ in range(3)]},
+            {"symbol": ["AAPL", "NSFT", "GOOG"]},
+            {"price": [140, 134, 142]},
+            {"timestamp": [datetime.datetime.now() for _ in range(3)]},
+        )
+        insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (%s,%s,%s,%s) IF NOT EXISTS"
+        data = [
+            (row["stock_id"], row["symbol"], row["price"], row["timestamp"])
+            for row in dataframe.to_dicts()
+        ]
+        for row in data:
+            session.execute(insertquery, row)
+            print("data inserted successfully")
+    except Exception as e:
+        raise e
+
 
 def connect_cassandra(keyspace):
     logging.info(f"Connecting to Cassandra cluster: ")
@@ -43,12 +66,7 @@ def connect_cassandra(keyspace):
         PASSWORD = "cassandra"
         CASSANDRA_HOSTS = ["127.0.0.1"]
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
-        cluster = Cluster(
-            CASSANDRA_HOSTS,
-            auth_provider=auth_provider,
-            load_balancing_policy=DCAwareRoundRobinPolicy(),
-            protocol_version=5,  # Adjust if needed
-        )
+        cluster = Cluster(CASSANDRA_HOSTS, auth_provider=auth_provider)
         session = cluster.connect()
         session.set_keyspace(keyspace)
         return session
