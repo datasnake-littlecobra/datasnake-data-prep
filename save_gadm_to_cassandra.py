@@ -52,13 +52,14 @@ def save_to_cassandra_main(df, gadm_level: str):
         # print(insertquery)
         session.execute(insertquery)
         print("data inserted successfully")
-        # insert_sample_data(session)
-        # optimized_batch_insert_cassandra(
-        #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
-        # )
-        # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
         keyspace="datasnake_data_prep_keyspace"
-        batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
+        # insert_sample_data(session)
+        optimized_batch_insert_cassandra(
+            session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
+        )
+        # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
+        
+        # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
         # optimized_insert_cassandra(
         #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         # )
@@ -97,10 +98,10 @@ def connect_cassandra(keyspace):
         CASSANDRA_HOSTS = ["127.0.0.1"]
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
         cluster = Cluster(
-            CASSANDRA_HOSTS,
+            contact_points=CASSANDRA_HOSTS,
             auth_provider=auth_provider,
-            load_balancing_policy=DCAwareRoundRobinPolicy(),
-            protocol_version=5,
+            protocol_version=4,  # Stay on version 4
+            load_balancing_policy=DCAwareRoundRobinPolicy(local_dc="datacenter1"),
         )
         session = cluster.connect()
         session.set_keyspace(keyspace)
