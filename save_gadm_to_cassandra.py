@@ -89,7 +89,12 @@ def connect_cassandra(keyspace):
         PASSWORD = "cassandra"
         CASSANDRA_HOSTS = ["127.0.0.1"]
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
-        cluster = Cluster(CASSANDRA_HOSTS, auth_provider=auth_provider)
+        cluster = Cluster(
+            CASSANDRA_HOSTS,
+            auth_provider=auth_provider,
+            load_balancing_policy=DCAwareRoundRobinPolicy(),
+            protocol_version=5,
+        )
         session = cluster.connect()
         session.set_keyspace(keyspace)
         return session
