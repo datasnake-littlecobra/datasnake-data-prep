@@ -172,6 +172,7 @@ def optimized_batch_insert_cassandra(
             batch_size_bytes = sum(sys.getsizeof(row) for row in current_batch)  # Get batch size in bytes
 
             logging.info(f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes")
+            print(f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes")
             
             for row in current_batch:
                 batch.add(prepared, row)
