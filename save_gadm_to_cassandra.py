@@ -1,5 +1,6 @@
 from uuid import uuid4
 import datetime
+import sys
 import polars as pl
 from cassandra.query import BatchStatement
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -161,12 +162,21 @@ def optimized_batch_insert_cassandra(
         insert_query = f"INSERT INTO {keyspace}.{table_name} ({column_names}) VALUES ({placeholders})"
 
         prepared = session.prepare(insert_query)
-
+        df_size_mb = dataframe.estimated_size() / (1024 * 1024)  # Convert bytes to MB
+        print(
+            f"Processing Cassandra {df_size_mb:.2f} MB!"
+        )
         rows = [tuple(row) for row in dataframe.iter_rows()]
 
         for i in range(0, len(rows), batch_size):
             batch = BatchStatement()
-            for row in rows[i : i + batch_size]:
+            current_batch = rows[i : i + batch_size]
+    
+            batch_size_bytes = sum(sys.getsizeof(row) for row in current_batch)  # Get batch size in bytes
+
+            logging.info(f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes")
+            
+            for row in current_batch:
                 batch.add(prepared, row)
 
             session.execute(batch)
