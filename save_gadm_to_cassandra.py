@@ -46,6 +46,8 @@ def insert_sample_data(session):
             {"price": [140, 134, 142]},
             {"timestamp": [datetime.datetime.now() for _ in range(3)]},
         )
+        print(dataframe.head())
+        print("inserting into stocks table")
         insertquery = "INSERT INTO stocks (stock_id, symbol, price, timestamp) VALUES (%s,%s,%s,%s) IF NOT EXISTS"
         data = [
             (row["stock_id"], row["symbol"], row["price"], row["timestamp"])

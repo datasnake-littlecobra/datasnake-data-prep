@@ -46,3 +46,12 @@ CREATE TABLE IF NOT EXISTS wof_data (
     wkt_geometry TEXT,
     PRIMARY KEY ((country, state, city), postal_code)
 );
+
+DROP TABLE stocks;
+CREATE TABLE IF NOT EXISTS stocks (
+    stock_id UUID,
+    symbol TEXT,
+    price FLOAT,
+    timestamp TIMESTAMP,
+    PRIMARY KEY (symbol, timestamp )
+) WITH CLUSTERING ORDER BY ( timestamp DESC )
