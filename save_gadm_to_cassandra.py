@@ -10,7 +10,7 @@ from cassandra.concurrent import execute_concurrent_with_args
 import logging
 
 
-def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
+def save_to_cassandra_main(df, cluster_ips, keyspace: str, gadm_level: str):
     session = None
     try:
         logging.info("Inside Cassandra Connect call:")
@@ -26,7 +26,7 @@ def save_to_cassandra_main(df, cluster_ips, keyspace, gadm_level):
         auth_provider = PlainTextAuthProvider(USERNAME, PASSWORD)
         cluster = Cluster(CASSANDRA_HOSTS, auth_provider=auth_provider)
         session = cluster.connect()
-        session.set_keyspace(keyspace)
+        session.set_keyspace("datasnake_data_prep_keyspace")
         # print("cassandra connection established!")
         # dataframe = pl.DataFrame(
         #     {"stock_id": [uuid4() for _ in range(3)]},
