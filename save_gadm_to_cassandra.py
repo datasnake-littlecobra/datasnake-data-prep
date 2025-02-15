@@ -137,6 +137,7 @@ def optimized_batch_insert_cassandra(
                     "state",
                     "shapeID",
                     "gadm_level",
+                    "wkt_geometry_state"
                 ],
             },
             "ADM2": {

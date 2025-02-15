@@ -63,7 +63,7 @@ dataframe_mapping = {
         "gadm_level",
         # "wkt_geometry_country",
     ],
-    "ADM1": ["country_code", "state", "shapeID", "gadm_level"],  # "wkt_geometry_state"
+    "ADM1": ["country_code", "state", "shapeID", "gadm_level", "wkt_geometry_state"],  # "wkt_geometry_state"
     "ADM2": [
         "country_code",
         "city",
@@ -182,6 +182,11 @@ def convert_gdf_to_polars(gdf, level):
 
     df = pl.DataFrame(gdf)
     df.filter(df["country_code"].is_not_null())
+    # Dynamically apply filtering based on column existence
+    if "state" in df.columns:
+        df = df.filter(df["state"].is_not_null())
+    elif "city" in df.columns:
+        df = df.filter(df["city"].is_not_null())
     # df = df.with_columns(pl.lit(level).alias("gadm_level"))
     # print(df.head())
     return df
