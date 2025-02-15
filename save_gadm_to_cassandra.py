@@ -53,19 +53,116 @@ def save_to_cassandra_main(df, gadm_level: str):
         # print(insertquery)
         session.execute(insertquery)
         print("data inserted successfully")
-        keyspace="datasnake_data_prep_keyspace"
+        keyspace = "datasnake_data_prep_keyspace"
         # insert_sample_data(session)
         optimized_batch_insert_cassandra(
             session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
         )
+        dynamic_batch_insert(
+            session,
+            keyspace,
+            df,
+            gadm_level,
+            base_batch_size=5,
+            max_batch_size_kb=5120,
+            sleep_time=0.1,
+        )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
-        
+
         # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
         # optimized_insert_cassandra(
         #     session, keyspace, gadm_level, df, concurrency=5, batch_size=100
         # )
     except Exception as e:
         logging.error(f"Error writing to Cassandra: {e}")
+
+
+def dynamic_batch_insert(
+    session,
+    keyspace,
+    dataframe,
+    gadm_level,
+    base_batch_size=5,
+    max_batch_size_kb=5120,
+    sleep_time=0.1,
+):
+    """
+    Dynamically inserts data into Cassandra, ensuring batch size does not exceed max_batch_size_kb.
+    """
+    try:
+        table_mapping = {
+            "ADM0": {
+                "table_name": "gadm0_data",
+                "columns": [
+                    "country_code",
+                    "country_full_name",
+                    "gadm_level",
+                ],
+            },
+            "ADM1": {
+                "table_name": "gadm1_data",
+                "columns": [
+                    "country_code",
+                    "state",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_state",
+                ],
+            },
+            "ADM2": {
+                "table_name": "gadm2_data",
+                "columns": [
+                    "country_code",
+                    "city",
+                    "shapeID",
+                    "gadm_level",
+                ],
+            },
+        }
+        table_info = table_mapping[gadm_level]
+        table_name = table_info["table_name"]
+        columns = table_info["columns"]
+        column_names = ", ".join(columns)
+        placeholders = ", ".join(["?"] * len(columns))
+        insert_query = f"INSERT INTO {keyspace}.{table_name} ({column_names}) VALUES ({placeholders})"
+        print("insert_query for dynamic batch insert:")
+        print(insert_query)
+        prepared = session.prepare(insert_query)
+
+        rows = [tuple(row) for row in dataframe.iter_rows()]
+
+        i = 0
+        while i < len(rows):
+            batch = BatchStatement()
+            batch_size_bytes = 0
+            batch_start = i
+
+            while i < len(rows) and batch_size_bytes / 1024 < max_batch_size_kb:
+                row_size = sys.getsizeof(rows[i])
+
+                # If adding this row exceeds max batch size, stop adding
+                if (batch_size_bytes + row_size) / 1024 > max_batch_size_kb:
+                    break
+
+                batch.add(prepared, rows[i])
+                batch_size_bytes += row_size
+                i += 1
+
+            # Log batch size
+            batch_size_kb = batch_size_bytes / 1024
+            logging.info(
+                f"Inserting batch of size: {batch_size_kb:.2f} KB ({i - batch_start} rows)"
+            )
+
+            # Execute the batch insert
+            session.execute(batch)
+            time.sleep(sleep_time)  # Slight delay to avoid overloading
+
+        logging.info(f"Successfully inserted {len(rows)} records into {table_name}")
+
+    except Exception as e:
+        logging.error(f"Errored out writing to Cassandra: {e}")
+        raise
 
 
 def insert_sample_data(session):
@@ -137,7 +234,7 @@ def optimized_batch_insert_cassandra(
                     "state",
                     "shapeID",
                     "gadm_level",
-                    "wkt_geometry_state"
+                    "wkt_geometry_state",
                 ],
             },
             "ADM2": {
@@ -161,20 +258,25 @@ def optimized_batch_insert_cassandra(
 
         prepared = session.prepare(insert_query)
         df_size_mb = dataframe.estimated_size() / (1024 * 1024)  # Convert bytes to MB
-        print(
-            f"Processing Cassandra {df_size_mb:.2f} MB!"
-        )
+        print(f"Processing Cassandra {df_size_mb:.2f} MB!")
         rows = [tuple(row) for row in dataframe.iter_rows()]
 
+        i = 0
         for i in range(0, len(rows), batch_size):
             batch = BatchStatement()
             current_batch = rows[i : i + batch_size]
-    
-            batch_size_bytes = sum(sys.getsizeof(row) for row in current_batch)  # Get batch size in bytes
 
-            logging.info(f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes")
-            print(f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes")
-            
+            batch_size_bytes = sum(
+                sys.getsizeof(row) for row in current_batch
+            )  # Get batch size in bytes
+
+            logging.info(
+                f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes"
+            )
+            print(
+                f"Inserting batch {i // batch_size + 1} with {len(current_batch)} rows, size: {batch_size_bytes} bytes for {gadm_level}"
+            )
+
             for row in current_batch:
                 batch.add(prepared, row)
 
