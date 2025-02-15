@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS gadm1_data (
     state TEXT,
     shapeID TEXT,
     gadm_level TEXT,
+    wkt_geometry_state TEXT,
     PRIMARY KEY (country_code, state)
 );
 
