@@ -1,22 +1,9 @@
+import os
 import polars as pl
-import hvac
 import logging
 
-client = hvac.Client(url="http://127.0.0.1:8200")
-# Access the secret
-secret_path_v1 = "secret/s3keys"
-# For KV version 2, use 'data/' in the path
-secret_path_v2 = "secret/data/s3keys"
-# using this path
-secret_path = "s3keys"
-# using v1 kv with default path SET TO = "secret" by VAULT
-# works
-secret_response = client.secrets.kv.v1.read_secret(
-    path=secret_path, mount_point="secret"
-)
-
-access_key = secret_response["data"]["aws_access_key_id"]
-secret_key = secret_response["data"]["aws_secret_access_key"]
+access_key = os.getenv("AWS_ACCESS_KEY")
+secret_key = os.getenv("AWS_SECRET_KEY")
 hostname = "sjc1.vultrobjects.com"
 
 storage_options = {
