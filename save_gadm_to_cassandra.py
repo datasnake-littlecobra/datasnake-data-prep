@@ -53,7 +53,7 @@ def save_to_cassandra_main(df, gadm_level: str):
         # print(insertquery)
         session.execute(insertquery)
         print("data inserted successfully")
-        keyspace = "datasnake_data_prep_keyspace"
+        keyspace = "datasnakedataprepkeyspace"
         # insert_sample_data(session)
         # optimized_batch_insert_cassandra(
         #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
@@ -75,6 +75,62 @@ def save_to_cassandra_main(df, gadm_level: str):
         # )
     except Exception as e:
         logging.error(f"Error writing to Cassandra: {e}")
+
+
+def simple_gadm_insert(
+    session,
+    keyspace,
+    dataframe,
+    gadm_level,
+):
+    try:
+        table_mapping = {
+            "ADM0": {
+                "table_name": "gadm0_data",
+                "columns": [
+                    "country_code",
+                    "country_full_name",
+                    "gadm_level",
+                ],
+            },
+            "ADM1": {
+                "table_name": "gadm1_data",
+                "columns": [
+                    "country_code",
+                    "state",
+                    "shapeID",
+                    "gadm_level",
+                    "wkt_geometry_state",
+                ],
+            },
+            "ADM2": {
+                "table_name": "gadm2_data",
+                "columns": [
+                    "country_code",
+                    "city",
+                    "shapeID",
+                    "gadm_level",
+                ],
+            },
+        }
+        table_info = table_mapping[gadm_level]
+        table_name = table_info["table_name"]
+        columns = table_info["columns"]
+        column_names = ", ".join(columns)
+        placeholders = ", ".join(["?"] * len(columns))
+        insert_query = f"INSERT INTO {keyspace}.{table_name} ({column_names}) VALUES ({placeholders})"
+        print("insert_query for dynamic batch insert:")
+        print(insert_query)
+        prepared = session.prepare(insert_query)
+        data = [
+            (row["country_code"], row["state"], row["shapeID"], row["gadm_level"], row["wkt_geometry_state"])
+            for row in dataframe.to_dicts()
+        ]
+        for row in data:
+            session.execute(prepared, row)
+            print("data inserted successfully")
+    except Exception as e:
+        raise e
 
 
 def dynamic_batch_insert(
