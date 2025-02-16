@@ -218,7 +218,7 @@ def process_gadm_level(level: str):
         #     df, deltalake_gadm_s3_uri[level], deltalake_partitions[level]
         # )
         cluster_ips = "127.0.0.1"
-        keyspace = "datasnake_data_prep_keyspace"
+        keyspace = "datasnakedataprepkeyspace"
 
         save_to_cassandra_main(
             df, cluster_ips, keyspace, level

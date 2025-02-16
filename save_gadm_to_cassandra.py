@@ -33,7 +33,7 @@ def save_to_cassandra_main(df, gadm_level: str):
             load_balancing_policy=DCAwareRoundRobinPolicy(local_dc="datacenter1"),
         )
         session = cluster.connect()
-        session.set_keyspace("test_keyspace")  # datasnake_data_prep_keyspace
+        session.set_keyspace("test_keyspace")  # datasnakedataprepkeyspace
         print("cassandra connection established!")
         # dataframe = pl.DataFrame(
         #     {"stock_id": [uuid4() for _ in range(3)]},
@@ -54,19 +54,25 @@ def save_to_cassandra_main(df, gadm_level: str):
         session.execute(insertquery)
         print("data inserted successfully")
         keyspace = "datasnakedataprepkeyspace"
-        # insert_sample_data(session)
-        # optimized_batch_insert_cassandra(
-        #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
-        # )
-        dynamic_batch_insert(
+        simple_gadm_insert(
             session,
             keyspace,
             df,
             gadm_level,
-            base_batch_size=5,
-            max_batch_size_kb=5120,
-            sleep_time=0.1,
         )
+        # insert_sample_data(session)
+        # optimized_batch_insert_cassandra(
+        #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
+        # )
+        # dynamic_batch_insert(
+        #     session,
+        #     keyspace,
+        #     df,
+        #     gadm_level,
+        #     base_batch_size=5,
+        #     max_batch_size_kb=5120,
+        #     sleep_time=0.1,
+        # )
         # batch_insert_cassandra(session, table_name, dataframe, batch_size, timeout)
 
         # batch_insert_cassandra_async(session, keyspace, gadm_level, df, concurrency=10)
@@ -123,7 +129,13 @@ def simple_gadm_insert(
         print(insert_query)
         prepared = session.prepare(insert_query)
         data = [
-            (row["country_code"], row["state"], row["shapeID"], row["gadm_level"], row["wkt_geometry_state"])
+            (
+                row["country_code"],
+                row["state"],
+                row["shapeID"],
+                row["gadm_level"],
+                row["wkt_geometry_state"],
+            )
             for row in dataframe.to_dicts()
         ]
         for row in data:
