@@ -1,5 +1,5 @@
-CREATE KEYSPACE IF NOT EXISTS datasnake_data_prep_keyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
-USE datasnake_data_prep_keyspace;
+CREATE KEYSPACE IF NOT EXISTS datasnakedataprepkeyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+USE datasnakedataprepkeyspace;
 DROP TABLE gadm0_data;
 DROP TABLE gadm1_data;
 DROP TABLE gadm2_data;

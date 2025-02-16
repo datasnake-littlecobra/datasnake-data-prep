@@ -239,7 +239,9 @@ def process_gadm_level(level: str):
         keyspace = "datasnake_data_prep_keyspace"
         print("sending dataframe to cassandra main:")
         print(df.head())
-        save_to_cassandra_main(df, level)
+        if level == "ADM1":
+            save_to_cassandra_main(df, level)
+        
         end_time = time.time()
         time_taken = end_time - start_time
         logger.info(f"Total time take to store gadm_{level} : {time_taken}")

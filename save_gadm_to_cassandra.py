@@ -55,9 +55,9 @@ def save_to_cassandra_main(df, gadm_level: str):
         print("data inserted successfully")
         keyspace = "datasnake_data_prep_keyspace"
         # insert_sample_data(session)
-        optimized_batch_insert_cassandra(
-            session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
-        )
+        # optimized_batch_insert_cassandra(
+        #     session, keyspace, gadm_level, df, batch_size=50, sleep_time=0.1
+        # )
         dynamic_batch_insert(
             session,
             keyspace,
@@ -132,25 +132,30 @@ def dynamic_batch_insert(
         rows = [tuple(row) for row in dataframe.iter_rows()]
 
         i = 0
+
         while i < len(rows):
             batch = BatchStatement()
             batch_size_bytes = 0
             batch_start = i
-
+            batch_count = 0
             while i < len(rows) and batch_size_bytes / 1024 < max_batch_size_kb:
                 row_size = sys.getsizeof(rows[i])
-
+                print("row size:", row_size)
                 # If adding this row exceeds max batch size, stop adding
                 if (batch_size_bytes + row_size) / 1024 > max_batch_size_kb:
                     break
 
                 batch.add(prepared, rows[i])
+                batch_count = +1
                 batch_size_bytes += row_size
                 i += 1
 
             # Log batch size
             batch_size_kb = batch_size_bytes / 1024
             logging.info(
+                f"Inserting batch of size: {batch_size_kb:.2f} KB ({i - batch_start} rows)"
+            )
+            print(
                 f"Inserting batch of size: {batch_size_kb:.2f} KB ({i - batch_start} rows)"
             )
 
